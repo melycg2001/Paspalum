@@ -17,6 +17,6 @@ These scripts were meant to be run in the following order:
 
 (4) 4.Exploratory_Linegraphs_&_Groundtruth_TV.R
 
-(5) 5.Plotting_&_Making_Tables_for_CI_Ttest_&_Pvals_TV.R
+(5) 5.Plotting_&_ Making_Tables_for_CI_Ttest_&_Pvals_TV.R
 
 (6) 6.Exploring_Ecotype_Differences_Across_Genotypes_TV.R
