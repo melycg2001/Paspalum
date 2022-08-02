@@ -714,7 +714,7 @@ ggplot(aes(x = dap, y = mean, color = ecotype, shape= treatment), data = plot.df
   geom_point(size =5) +
   scale_shape_manual (values = c(8,4))+ 
   theme_minimal() +
-  labs(x = "Days After Planting",
+  labs(x = "Days in the Phenotyper",
        y= "Mean Biomass", 
        color = "Ecotype", 
        shape = "Treatments") +
@@ -734,7 +734,7 @@ ggplot(aes(x = dap, y = mean, color = ecotype), data = plot.df) +
   geom_smooth(se = F, aes(linetype = treatment)) +
   scale_shape_manual (values = c(8,4))+ 
   theme_minimal() +
-  labs(x = "Days After Planting",
+  labs(x = "Days in the Phenotyper",
        y= "Mean Biomass", 
        color = "Ecotype", 
        linetype = "Treatments") +
@@ -765,7 +765,7 @@ ggplot(aes(x = dap, y = mean, color = eco.treat), data = plot.df2) +
   geom_point(size = 12) +
   scale_shape_manual (values = c(8,4))+ 
   theme_minimal() +
-  labs(x = "Days After Planting",
+  labs(x = "Days in the Phenotyper",
        y= "Mean Biomass", 
        color = "Ecotype", 
        linetype = "Treatments") +
@@ -781,6 +781,51 @@ ggplot(aes(x = dap, y = mean, color = eco.treat), data = plot.df2) +
 
 
 ggsave("Coarse_fine_distichum_comparison_on_same_graph_new2.png", 
+       width = 60,
+       height = 35,
+       dpi = "retina",
+       units = "in", 
+       limitsize = FALSE)
+########### Overall trend adding just control first 
+
+plot.df2 <- plot.df %>% 
+  mutate(eco.treat = paste(ecotype,",", treatment)) %>% 
+  filter(treatment %in% "Control")
+
+paired_palette <- c("dodgerblue4",
+                    #"dodgerblue",
+                    "darkorange4",
+                    #"darkorange2",
+                    "green4")
+                    #"green2")
+
+ggplot(aes(x = dap, y = mean, color = eco.treat), data = plot.df2) +
+  geom_errorbar(aes(ymin = mean - se, ymax = mean + se),
+                size = 5,
+                alpha = 0.5) +
+  geom_line(aes(group = eco.treat, linetype = treatment),
+            size = 8.5) +
+  geom_point(size = 12) +
+  scale_shape_manual (values = c(8,4))+ 
+  theme_minimal() +
+  labs(x = "Days in the Phenotyper",
+       y= "Mean Biomass", 
+       color = "Ecotype", 
+       linetype = "Treatments",
+       title = "Comparing Controls Over Time for Fine-Texture, Coarse-Texture, and Distichum") +
+  theme(axis.title = element_text(size = 80), 
+        legend.title = element_text(size = 75),
+        legend.key.size = unit(5, 'cm'), 
+        legend.text = element_text(size = 70), 
+        legend.position = "bottom", 
+        legend.background = element_rect(fill = "lightgrey"),
+        axis.text = element_text(size = 70),
+        plot.title = element_text(size = 85))+
+  scale_color_manual(values = paired_palette) +
+  guides(linetype = FALSE)
+
+
+ggsave("Just_the_controls_overall_trend.png", 
        width = 60,
        height = 35,
        dpi = "retina",
@@ -819,7 +864,7 @@ ggplot(aes(x = dap, y = mean, color = eco.treat), data = plot.df3) +
   geom_point(size = 10) +
   scale_shape_manual (values = c(8,4))+ 
   theme_minimal() +
-  labs(x = "Days After Planting",
+  labs(x = "Days in the Phenotyper",
        y= "Mean Biomass", 
        color = "Ecotype", 
        shape = "Treatments") +
@@ -860,7 +905,7 @@ ggplot(aes(x = dap, y = mean, color = eco.treat), data = plot.df3) +
   geom_point(size = 10) +
   scale_shape_manual (values = c(8,4))+ 
   theme_minimal() +
-  labs(x = "Days After Planting",
+  labs(x = "Days in the Phenotyper",
        y= "Mean Biomass", 
        color = "Ecotype", 
        linetype = "Treatments") +
