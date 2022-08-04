@@ -1,3 +1,6 @@
+library(tidyverse)
+library(ggpubr)
+library(gridExtra)
 
 # ------------------------------------------------------------------------\
 # plotting genotypes of interest --------
@@ -926,3 +929,174 @@ ggsave("Sudden Comparison of best and worst genotypes.png",
        dpi = "retina",
        units = "in")
 
+# ------------------------------------------------------------------------\
+# Another way of representing the data of DG140 vs DG066 --------
+# ------------------------------------------------------------------------\
+plot.df <- clean.df %>% 
+  filter(genotype %in% c("DG066", "DG140")) %>% 
+  select(genotype, dap, treatment, area) %>% 
+  filter(treatment %in% c("Control", "Sudden_High"))
+
+ggplot(aes(x = factor(dap), y = area, fill = treatment), data = plot.df) +
+  geom_boxplot() +
+  #facet_wrap(~genotype) +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  stat_compare_means(method = 't.test',
+                     label = 'p.signif',
+                     ref.group = "Control",
+                     #hide.ns = T,
+                     size = 6)
+
+all.genos <- unique(plot.df$genotype)
+i <- 1
+plot.list <- list()
+for(this.geno in all.genos){
+  
+  #this.geno <- all.genos[1]
+  this.plot.df <- plot.df %>% 
+    filter(genotype == this.geno) 
+  
+  p <-
+    ggplot(aes(x = treatment, y = area, fill = treatment), data = this.plot.df) +
+    geom_boxplot() +
+    theme_minimal() +
+    theme(legend.position = "bottom",
+          axis.text.x = element_blank(),
+          panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank(),
+          axis.line = element_line(colour = "black"),
+          axis.title = element_text(size = 60),
+          legend.title = element_text(size = 57),
+          legend.key.size = unit(3, 'cm'),
+          legend.text = element_text(size = 50),
+          axis.text = element_text(size = 50)) +
+    stat_compare_means(method = 't.test',
+                       label = 'p.signif',
+                       ref.group = "Control",
+                       hide.ns = T,
+                       size = 6) +
+    facet_wrap(~dap, nrow = 1,
+               strip.position = "bottom") +
+    scale_fill_manual(values = c("grey", "red")) +
+    labs(x = "Days of Experiment",
+         y = "Top-view Pixel Area",
+         title = this.geno)
+  
+  
+  plot.list[[i]] <- p
+  i <- i+1
+}
+
+#print(marrangeGrob(plot.list, nrow = 1, ncol = 2))
+
+print(ggpubr::ggarrange(plotlist = plot.list,
+                        nrow = 1,
+                        common.legend = T,
+                        legend = "bottom"))
+
+ggsave("DG140 vs DG066.png", 
+       width = 43,
+       height = 24,
+       dpi = "retina",
+       units = "in")
+# ------------------------------------------------------------------------\
+# Making graph of general trend across all experiment for sudden vs gradual treatments --------
+# ------------------------------------------------------------------------\
+new.df <- clean.df %>% 
+  select(dap, genotype, treatment, area) %>% 
+  group_by(dap, treatment) %>%
+  mutate(N = n(),
+         mean = mean(area, na.rm = T),
+         sd = sd(area, na.rm = T),
+         se = sd / sqrt(N),
+         ci = qt(.95/2 + .5, N - 1) * se) %>%
+  select(-area) %>% 
+  distinct() %>% 
+  filter(treatment %in% c("Control", "Gradual_High", "Sudden_High"))
+
+my.plot <- ggplot(aes(x = dap, y = mean, color = treatment), data = new.df) +
+  geom_errorbar(aes(ymin = mean - se, ymax = mean + se),
+                size = 4,
+                alpha = 0.4) +
+  geom_line(aes(group = treatment),size = 7) +
+  geom_point(size = 10) +
+  theme_minimal() +
+  labs(x = "Days in the Phenotyper",
+       y= "PlantCV Pixel Area", 
+       color = "Treatment",
+       title = "Comparing Salt Tolerance Trends for Sudden High, Gradual High, and Control Treatments") +
+  theme(axis.title = element_text(size = 60), 
+        legend.title = element_text(size = 57),
+        legend.key.size = unit(3, 'cm'), 
+        legend.text = element_text(size = 50), 
+        legend.position = "bottom", 
+        legend.background = element_rect(fill = "lightgrey"),
+        axis.text = element_text(size = 50),
+        plot.title = element_text(size = 70)) +
+  scale_color_manual(values = paired_palette)
+
+ggsave("Sudden & Gradual High and control over time trend.png", 
+       width = 43,
+       height = 24,
+       dpi = "retina",
+       units = "in")
+
+# ------------------------------------------------------------------------\
+# boxplot of different ecotypes for control and sudden high  on last day --------
+# ------------------------------------------------------------------------
+
+library(tidyverse)
+library(ggpubr)
+library(gridExtra)
+
+plot.df <- clean.df %>% 
+  select(genotype, dap, treatment, ecotype, area) %>% 
+  filter(treatment %in% c("Control", "Sudden_High")) %>% 
+  mutate(ecotype = str_replace(ecotype, "Coarse-textured \\(Admixed\\)", "Coarse-textured")) %>% 
+  mutate(ecotype = str_replace(ecotype, "distichum", "Distichum")) %>% 
+  filter(ecotype %in% c("Coarse-textured", "Distichum", "Fine-textured")) %>% 
+  filter(dap == 20)
+
+plot.df$ecotype_f = factor(plot.df$ecotype, levels=c("Coarse-textured",
+                                                     "Fine-textured",
+                                                     "Distichum"))
+
+plot.df2 <- plot.df %>% 
+  mutate(eco.treat = paste0(ecotype, ", ", treatment))
+
+paired_palette <- c("dodgerblue4",
+                    "dodgerblue",
+                    "darkorange4",
+                    "darkorange",
+                    "forestgreen",
+                    "darkseagreen1")
+
+ggplot(aes(x = treatment, y = area), data = plot.df2) +
+  #geom_violin(aes(fill = treatment)) +
+  #geom_boxplot(alpha = 0) +
+  geom_boxplot(aes(fill = eco.treat), outlier.alpha = 0) +
+  geom_jitter(alpha = .3, width = .175, size = 10) +
+  theme_minimal() +
+  facet_wrap(~ecotype_f, nrow = 1) +
+  stat_compare_means(aes(method = 't.test',
+                     label = paste0("p = ", ..p.format..),
+                     ref.group = "Control",
+                     hide.ns = T,
+                     vjust = 1), size = 15) +
+  theme(axis.title.x = element_blank(),
+        legend.position = "bottom",
+        strip.text = element_text(size = 50),
+        axis.text.x = element_text(size = 50),
+        axis.title = element_text(size = 60), 
+        legend.title = element_text(size = 57),
+        legend.key.size = unit(3, 'cm'), 
+        legend.text = element_text(size = 50), 
+        axis.text = element_text(size = 50)) +
+  scale_fill_manual(values = paired_palette)
+
+ggsave("Boxplot last day coarse, fine and control.png", 
+       width = 43,
+       height = 24,
+       dpi = "retina",
+       units = "in")
